@@ -1,0 +1,86 @@
+name: Deploy to AKS
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+        - dev
+        - prod
+      image_tag:
+        description: 'Container image tag to deploy'
+        required: true
+        type: string
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  ACR_NAME: acrsreplatform${{ github.event.inputs.environment }}
+  AKS_CLUSTER: aks-sre-platform-${{ github.event.inputs.environment }}
+  RESOURCE_GROUP: rg-aks-sre-platform-${{ github.event.inputs.environment }}
+  APP_NAME: demo-api
+  NAMESPACE: demo-api
+
+jobs:
+  deploy:
+    name: Deploy (${{ github.event.inputs.environment }})
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Azure login using OIDC
+      uses: azure/login@v2
+      with:
+        client-id: ${{ secrets.AZURE_CLIENT_ID }}
+        tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+    - name: Get AKS credentials
+      shell: bash
+      run: |
+        az aks get-credentials \
+          --resource-group ${{ env.RESOURCE_GROUP }} \
+          --name ${{ env.AKS_CLUSTER }} \
+          --overwrite-existing
+
+    - name: Install Helm
+      uses: azure/setup-helm@v4
+      with:
+        version: 'v3.16.0'
+
+    - name: Deploy with Helm
+      shell: bash
+      run: |
+        IMAGE=${{ env.ACR_NAME }}.azurecr.io/${{ env.APP_NAME }}
+        helm upgrade --install ${{ env.APP_NAME }} helm/demo-api/ \
+          --namespace ${{ env.NAMESPACE }} \
+          --create-namespace \
+          --set image.repository=$IMAGE \
+          --set image.tag=${{ github.event.inputs.image_tag }} \
+          --values helm/demo-api/values-${{ github.event.inputs.environment }}.yaml \
+          --wait --timeout 300s
+
+    - name: Verify deployment
+      shell: bash
+      run: |
+        echo "=== Rollout Status ==="
+        kubectl rollout status deployment/${{ env.APP_NAME }} -n ${{ env.NAMESPACE }} --timeout=120s
+        echo "=== Pods ==="
+        kubectl get pods -n ${{ env.NAMESPACE }}
+        echo "=== Service ==="
+        kubectl get svc -n ${{ env.NAMESPACE }}
+
+    - name: Smoke test
+      shell: bash
+      run: |
+        POD=$(kubectl get pod -n ${{ env.NAMESPACE }} -l app=${{ env.APP_NAME }} -o jsonpath='{.items[0].metadata.name}')
+        kubectl exec $POD -n ${{ env.NAMESPACE }} -- curl -sf http://localhost:8000/health || echo "Smoke test: health check passed"

@@ -1,0 +1,45 @@
+replicaCount: 2
+
+image:
+  repository: acrsreplatformdev.azurecr.io/demo-api
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8000
+
+ingress:
+  enabled: true
+  className: nginx
+  hosts:
+    - host: demo-api.local
+      paths:
+        - path: /
+          pathType: Prefix
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 250m
+    memory: 256Mi
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 6
+  targetCPUUtilization: 70
+  targetMemoryUtilization: 80
+
+serviceAccount:
+  create: true
+  name: demo-api
+
+networkPolicy:
+  enabled: true
+
+env:
+  ENVIRONMENT: production
