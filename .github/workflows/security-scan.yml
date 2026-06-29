@@ -1,0 +1,66 @@
+name: Security Scan
+
+on:
+  pull_request:
+    paths:
+      - 'app/**'
+  schedule:
+    - cron: '0 6 * * 1'
+
+jobs:
+  dependency-scan:
+    name: Dependency Scan
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install pip-audit
+      run: pip install pip-audit
+
+    - name: Scan Python dependencies
+      working-directory: app
+      run: pip-audit -r requirements.txt
+
+  container-scan:
+    name: Container Image Scan
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Build Docker image
+      working-directory: app
+      run: docker build -t demo-api:scan .
+
+    - name: Run Trivy vulnerability scan
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: 'demo-api:scan'
+        format: 'table'
+        exit-code: '1'
+        severity: 'CRITICAL,HIGH'
+        ignore-unfixed: true
+
+  iac-scan:
+    name: Infrastructure Scan
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Run Checkov IaC scan
+      uses: bridgecrewio/checkov-action@v12
+      with:
+        directory: infra/
+        framework: bicep
+        soft_fail: true
+        output_format: cli
