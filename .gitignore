@@ -1,0 +1,47 @@
+# OS files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+.pytest_cache/
+.coverage
+htmlcov/
+venv/
+.venv/
+env/
+
+# Docker
+.docker/
+
+# Azure CLI
+.azure/
+
+# Bicep compiled output
+*.json.bak
+
+# Temporary files
+*.tmp
+*.bak
+*.log
+
+# Helm
+helm/*/charts/
+
+# Node
+node_modules/

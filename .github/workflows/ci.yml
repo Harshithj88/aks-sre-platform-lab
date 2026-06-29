@@ -1,0 +1,51 @@
+name: CI Pipeline
+
+on:
+  pull_request:
+    paths:
+      - 'app/**'
+  push:
+    branches: [main]
+    paths:
+      - 'app/**'
+
+jobs:
+  test:
+    name: Test and Lint
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      working-directory: app
+      run: |
+        pip install -r requirements.txt
+        pip install pytest httpx anyio pytest-anyio ruff
+
+    - name: Lint with Ruff
+      working-directory: app
+      run: ruff check .
+
+    - name: Run unit tests
+      working-directory: app
+      run: pytest tests/ -v
+
+    - name: Build Docker image
+      working-directory: app
+      run: docker build -t demo-api:ci-${{ github.sha }} .
+
+    - name: Run container smoke test
+      run: |
+        docker run -d --name demo-api-test -p 8000:8000 demo-api:ci-${{ github.sha }}
+        sleep 5
+        curl -f http://localhost:8000/health || exit 1
+        curl -f http://localhost:8000/ready || exit 1
+        docker stop demo-api-test
+        docker rm demo-api-test
