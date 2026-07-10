@@ -93,6 +93,7 @@ aks-sre-platform-lab/
 │   ├── main.py                        # FastAPI application
 │   ├── requirements.txt               # Python dependencies
 │   ├── Dockerfile                     # Container image definition
+│   ├── .dockerignore                  # Docker build context exclusions
 │   └── tests/
 │       └── test_main.py               # Unit tests
 ├── infra/
@@ -109,11 +110,14 @@ aks-sre-platform-lab/
 │       ├── Chart.yaml                 # Helm chart metadata
 │       ├── values.yaml                # Default values
 │       ├── values-dev.yaml            # Dev overrides
+│       ├── values-prod.yaml           # Prod overrides
 │       └── templates/
+│           ├── _helpers.tpl           # Template helpers (labels, names)
 │           ├── deployment.yaml        # Kubernetes Deployment
 │           ├── service.yaml           # Kubernetes Service
 │           ├── ingress.yaml           # Ingress resource
 │           ├── hpa.yaml               # Horizontal Pod Autoscaler
+│           ├── pdb.yaml               # PodDisruptionBudget
 │           ├── serviceaccount.yaml    # ServiceAccount
 │           ├── configmap.yaml         # ConfigMap
 │           └── networkpolicy.yaml     # NetworkPolicy

@@ -42,4 +42,4 @@ networkPolicy:
   enabled: true
 
 env:
-  ENVIRONMENT: production
+  ENVIRONMENT: default

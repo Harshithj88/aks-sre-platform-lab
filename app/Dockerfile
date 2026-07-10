@@ -1,11 +1,20 @@
 FROM python:3.11-slim AS base
 
+LABEL maintainer="SRE Platform Lab" \
+      description="Demo API for AKS SRE Platform Lab"
+
+RUN groupadd --gid 1000 appuser && \
+    useradd --uid 1000 --gid appuser --shell /bin/bash --create-home appuser
+
 WORKDIR /app
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY main.py .
+
+RUN chown -R appuser:appuser /app
+USER appuser
 
 EXPOSE 8000
 

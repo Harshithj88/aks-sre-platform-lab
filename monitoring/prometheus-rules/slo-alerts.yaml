@@ -23,7 +23,7 @@ spec:
           annotations:
             summary: "HTTP 5xx error rate exceeds 1% SLO threshold"
             description: "Error rate is {{ $value | humanizePercentage }} over the last 5 minutes."
-            runbook_url: "https://github.com/<owner>/aks-sre-platform-lab/blob/main/sre/incident-runbook.md"
+            runbook_url: "https://github.com/hjulapelli/aks-sre-platform-lab/blob/main/sre/incident-runbook.md"
 
         - alert: ErrorBudgetBurnRate
           expr: |

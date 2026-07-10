@@ -44,7 +44,11 @@ jobs:
     - name: Run container smoke test
       run: |
         docker run -d --name demo-api-test -p 8000:8000 demo-api:ci-${{ github.sha }}
-        sleep 5
+        for i in $(seq 1 15); do
+          curl -sf http://localhost:8000/health && break
+          echo "Waiting for container to be ready... ($i/15)"
+          sleep 2
+        done
         curl -f http://localhost:8000/health || exit 1
         curl -f http://localhost:8000/ready || exit 1
         docker stop demo-api-test

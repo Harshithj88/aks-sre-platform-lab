@@ -41,7 +41,7 @@ jobs:
       run: docker build -t demo-api:scan .
 
     - name: Run Trivy vulnerability scan
-      uses: aquasecurity/trivy-action@master
+      uses: aquasecurity/trivy-action@0.28.0
       with:
         image-ref: 'demo-api:scan'
         format: 'table'

@@ -83,4 +83,6 @@ jobs:
       shell: bash
       run: |
         POD=$(kubectl get pod -n ${{ env.NAMESPACE }} -l app=${{ env.APP_NAME }} -o jsonpath='{.items[0].metadata.name}')
-        kubectl exec $POD -n ${{ env.NAMESPACE }} -- curl -sf http://localhost:8000/health || echo "Smoke test: health check passed"
+        kubectl exec "$POD" -n ${{ env.NAMESPACE }} -- curl -sf http://localhost:8000/health \
+          && echo "Smoke test: health check passed" \
+          || { echo "Smoke test: health check FAILED"; exit 1; }
