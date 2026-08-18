@@ -79,7 +79,7 @@ A Python FastAPI service with built-in observability endpoints.
 | Container Registry | `acr.bicep` | Private Docker registry (admin disabled) |
 | Key Vault | `keyvault.bicep` | Secret storage with RBAC authorization |
 | Managed Identity | `managed-identity.bicep` | Workload identity for AKS pods |
-| Log Analytics | `main.bicep` | Container Insights and log aggregation |
+| Log Analytics | `loganalytics.bicep` | Container Insights and log aggregation |
 
 ### CI/CD Pipelines
 

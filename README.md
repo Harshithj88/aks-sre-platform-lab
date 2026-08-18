@@ -120,7 +120,8 @@ aks-sre-platform-lab/
 │           ├── pdb.yaml               # PodDisruptionBudget
 │           ├── serviceaccount.yaml    # ServiceAccount
 │           ├── configmap.yaml         # ConfigMap
-│           └── networkpolicy.yaml     # NetworkPolicy
+│           ├── networkpolicy.yaml     # NetworkPolicy
+│           └── NOTES.txt              # Post-install instructions
 ├── monitoring/
 │   ├── prometheus-rules/
 │   │   ├── slo-alerts.yaml            # SLO-based alert rules
@@ -160,15 +161,16 @@ aks-sre-platform-lab/
 
 ## Features
 
-- **Infrastructure as Code** — Azure Bicep modules for AKS, ACR, Key Vault, Managed Identity
+- **Infrastructure as Code** — Azure Bicep modules for AKS, ACR, Key Vault, Managed Identity with resource tagging
 - **Secretless CI/CD** — GitHub Actions with OIDC authentication to Azure (no stored secrets)
-- **Container Workflow** — Docker build, security scan, push to ACR
+- **Container Workflow** — Multi-stage Docker build, security scan, push to ACR
 - **Helm Deployments** — Templated Kubernetes deployments with environment-specific values
-- **Kubernetes Best Practices** — Health probes, resource limits, HPA, NetworkPolicy, ServiceAccount
-- **Full Observability** — Prometheus metrics, Grafana dashboards, Alertmanager, OpenTelemetry
+- **Kubernetes Best Practices** — Health probes, resource limits, HPA, PDB, NetworkPolicy, topology spread, seccomp
+- **Full Observability** — Prometheus metrics middleware, Grafana dashboards, Alertmanager, OpenTelemetry
 - **SLO-Based Alerting** — Availability, latency, and error rate SLOs with error budget tracking
 - **SRE Documentation** — Runbooks, postmortem templates, on-call checklists, capacity planning
-- **Security Scanning** — Dependency, container image, and IaC vulnerability scanning
+- **Security Scanning** — Dependency audit, Trivy container scan (SARIF → GitHub Security), Checkov IaC scan
+- **Cloud Security** — Azure Policy addon, Microsoft Defender for Containers, RBAC-only Key Vault
 - **Cost Control** — Local development mode (kind/minikube) and Azure teardown automation
 
 ---
@@ -241,9 +243,10 @@ uvicorn main:app --reload --port 8000
 Test the endpoints:
 
 ```bash
-curl http://localhost:8000/health
-curl http://localhost:8000/ready
-curl http://localhost:8000/metrics
+curl http://localhost:8000/          # Service info
+curl http://localhost:8000/health     # Liveness probe
+curl http://localhost:8000/ready      # Readiness probe
+curl http://localhost:8000/metrics    # Prometheus metrics
 curl http://localhost:8000/simulate-latency?seconds=1
 curl http://localhost:8000/simulate-error
 ```
@@ -321,6 +324,7 @@ See [docs/cost-control.md](docs/cost-control.md) for detailed cost management st
 - [Architecture](docs/architecture.md) — architecture diagrams and design decisions
 - [Setup Guide](docs/setup-guide.md) — step-by-step deployment instructions
 - [Cost Control](docs/cost-control.md) — cost management strategies
+- [Resume Bullets](docs/resume-bullets.md) — portfolio-ready resume lines for this project
 - [SLOs](sre/slos.md) — service level objectives
 - [Error Budget Policy](sre/error-budget-policy.md) — error budget rules
 - [Incident Runbook](sre/incident-runbook.md) — incident response procedures
