@@ -6,6 +6,10 @@ on:
       - 'infra/**'
       - 'bicepconfig.json'
 
+concurrency:
+  group: infra-validate-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   id-token: write
   contents: read

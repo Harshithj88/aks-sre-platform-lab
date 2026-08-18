@@ -7,6 +7,10 @@ on:
   schedule:
     - cron: '0 6 * * 1'
 
+permissions:
+  contents: read
+  security-events: write
+
 jobs:
   dependency-scan:
     name: Dependency Scan
@@ -20,6 +24,8 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: '3.11'
+        cache: 'pip'
+        cache-dependency-path: app/requirements.txt
 
     - name: Install pip-audit
       run: pip install pip-audit
@@ -44,10 +50,16 @@ jobs:
       uses: aquasecurity/trivy-action@0.28.0
       with:
         image-ref: 'demo-api:scan'
-        format: 'table'
-        exit-code: '1'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
         severity: 'CRITICAL,HIGH'
         ignore-unfixed: true
+
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v3
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'
 
   iac-scan:
     name: Infrastructure Scan
