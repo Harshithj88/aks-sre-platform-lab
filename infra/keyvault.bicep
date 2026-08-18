@@ -4,9 +4,13 @@ param keyVaultName string
 @description('Azure region for the Key Vault')
 param location string
 
+@description('Resource tags')
+param tags object = {}
+
 resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
   name: toLower(keyVaultName)
   location: location
+  tags: tags
   properties: {
     tenantId: subscription().tenantId
     sku: {

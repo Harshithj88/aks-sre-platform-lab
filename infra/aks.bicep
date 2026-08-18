@@ -19,9 +19,13 @@ param logAnalyticsWorkspaceResourceId string
 @description('Resource ID of the Azure Container Registry for AcrPull role assignment')
 param acrResourceId string
 
+@description('Resource tags')
+param tags object = {}
+
 resource aks 'Microsoft.ContainerService/managedClusters@2024-09-01' = {
   name: aksName
   location: location
+  tags: tags
   identity: {
     type: 'SystemAssigned'
   }
@@ -66,6 +70,18 @@ resource aks 'Microsoft.ContainerService/managedClusters@2024-09-01' = {
         config: {
           logAnalyticsWorkspaceResourceID: logAnalyticsWorkspaceResourceId
         }
+      }
+      azurepolicy: {
+        enabled: true
+      }
+    }
+
+    securityProfile: {
+      defender: {
+        securityMonitoring: {
+          enabled: true
+        }
+        logAnalyticsWorkspaceResourceId: logAnalyticsWorkspaceResourceId
       }
     }
   }

@@ -18,6 +18,13 @@ param nodeCount int = 2
 @description('AKS VM size')
 param nodeVmSize string = 'Standard_B2s'
 
+@description('Resource tags for cost tracking and governance')
+param tags object = {
+  project: projectName
+  environment: environment
+  managedBy: 'bicep'
+}
+
 var namePrefix = '${projectName}-${environment}'
 
 module logAnalytics 'loganalytics.bicep' = {
@@ -25,6 +32,7 @@ module logAnalytics 'loganalytics.bicep' = {
   params: {
     workspaceName: 'law-${namePrefix}'
     location: location
+    tags: tags
   }
 }
 
@@ -33,6 +41,7 @@ module acr 'acr.bicep' = {
   params: {
     acrName: replace('acr${projectName}${environment}', '-', '')
     location: location
+    tags: tags
   }
 }
 
@@ -41,6 +50,7 @@ module keyVault 'keyvault.bicep' = {
   params: {
     keyVaultName: 'kv-${namePrefix}'
     location: location
+    tags: tags
   }
 }
 
@@ -49,6 +59,7 @@ module managedIdentity 'managed-identity.bicep' = {
   params: {
     identityName: 'id-${namePrefix}'
     location: location
+    tags: tags
   }
 }
 
@@ -62,6 +73,7 @@ module aks 'aks.bicep' = {
     nodeVmSize: nodeVmSize
     logAnalyticsWorkspaceResourceId: logAnalytics.outputs.workspaceResourceId
     acrResourceId: acr.outputs.acrResourceId
+    tags: tags
   }
 }
 
