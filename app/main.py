@@ -1,10 +1,18 @@
 import asyncio
+import logging
+import os
 import random
 import time
 from typing import Optional
 
-from fastapi import FastAPI, Query, Response
-from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
+from fastapi import FastAPI, Query, Request, Response
+from prometheus_client import Counter, Histogram, Info, generate_latest, CONTENT_TYPE_LATEST
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s %(message)s",
+)
+logger = logging.getLogger("demo-api")
 
 app = FastAPI(
     title="Demo API",
@@ -12,7 +20,6 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# Prometheus metrics
 REQUEST_COUNT = Counter(
     "http_requests_total",
     "Total HTTP requests",
@@ -32,13 +39,59 @@ ERROR_COUNT = Counter(
     ["method", "endpoint", "status"],
 )
 
+APP_INFO = Info("demo_api", "Demo API build information")
+APP_INFO.info({
+    "version": "1.0.0",
+    "environment": os.getenv("ENVIRONMENT", "local"),
+})
+
 startup_time = time.time()
+
+
+@app.middleware("http")
+async def metrics_middleware(request: Request, call_next):
+    if request.url.path in ("/health", "/ready", "/metrics"):
+        return await call_next(request)
+
+    start = time.time()
+    response = await call_next(request)
+    duration = time.time() - start
+
+    REQUEST_LATENCY.labels(
+        method=request.method,
+        endpoint=request.url.path,
+    ).observe(duration)
+
+    REQUEST_COUNT.labels(
+        method=request.method,
+        endpoint=request.url.path,
+        status=str(response.status_code),
+    ).inc()
+
+    if response.status_code >= 500:
+        ERROR_COUNT.labels(
+            method=request.method,
+            endpoint=request.url.path,
+            status=str(response.status_code),
+        ).inc()
+
+    return response
+
+
+@app.get("/")
+async def root():
+    """Root endpoint with service info."""
+    return {
+        "service": "demo-api",
+        "version": "1.0.0",
+        "environment": os.getenv("ENVIRONMENT", "local"),
+        "docs": "/docs",
+    }
 
 
 @app.get("/health")
 async def health():
     """Liveness probe endpoint. Returns healthy if the process is running."""
-    REQUEST_COUNT.labels(method="GET", endpoint="/health", status="200").inc()
     return {"status": "healthy"}
 
 
@@ -46,7 +99,6 @@ async def health():
 async def ready():
     """Readiness probe endpoint. Returns ready if the service can handle traffic."""
     uptime = time.time() - startup_time
-    REQUEST_COUNT.labels(method="GET", endpoint="/ready", status="200").inc()
     return {
         "status": "ready",
         "uptime_seconds": round(uptime, 2),
@@ -68,17 +120,10 @@ async def simulate_latency(
 ):
     """Simulate request latency for testing alerting and dashboards."""
     delay = seconds if seconds is not None else random.uniform(0.1, 3.0)
-
-    start = time.time()
     await asyncio.sleep(delay)
-    duration = time.time() - start
-
-    REQUEST_LATENCY.labels(method="GET", endpoint="/simulate-latency").observe(duration)
-    REQUEST_COUNT.labels(method="GET", endpoint="/simulate-latency", status="200").inc()
-
+    logger.info("Simulated latency: %.3fs", delay)
     return {
         "simulated_delay_seconds": round(delay, 3),
-        "actual_duration_seconds": round(duration, 3),
     }
 
 
@@ -88,13 +133,11 @@ async def simulate_error(
 ):
     """Simulate errors for testing alerting. Rate is probability of error (0.0 to 1.0)."""
     if random.random() < rate:
-        ERROR_COUNT.labels(method="GET", endpoint="/simulate-error", status="500").inc()
-        REQUEST_COUNT.labels(method="GET", endpoint="/simulate-error", status="500").inc()
+        logger.warning("Simulated 500 error triggered")
         return Response(
             content='{"status": "error", "message": "Simulated internal server error"}',
             status_code=500,
             media_type="application/json",
         )
 
-    REQUEST_COUNT.labels(method="GET", endpoint="/simulate-error", status="200").inc()
     return {"status": "ok", "message": "No error this time"}

@@ -10,6 +10,18 @@ def anyio_backend():
 
 
 @pytest.mark.anyio
+async def test_root():
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        response = await client.get("/")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["service"] == "demo-api"
+    assert "version" in data
+    assert "docs" in data
+
+
+@pytest.mark.anyio
 async def test_health():
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
@@ -47,7 +59,6 @@ async def test_simulate_latency():
     assert response.status_code == 200
     data = response.json()
     assert data["simulated_delay_seconds"] == 0.1
-    assert data["actual_duration_seconds"] >= 0.1
 
 
 @pytest.mark.anyio
