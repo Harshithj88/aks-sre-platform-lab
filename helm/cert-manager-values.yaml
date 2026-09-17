@@ -1,0 +1,63 @@
+# cert-manager Helm values for AKS SRE Platform Lab
+# Install: helm install cert-manager jetstack/cert-manager -f cert-manager-values.yaml -n cert-manager --create-namespace
+
+installCRDs: true
+
+replicaCount: 2
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    cpu: 200m
+    memory: 256Mi
+
+# Enable Prometheus metrics
+prometheus:
+  enabled: true
+  servicemonitor:
+    enabled: true
+    labels:
+      release: prometheus
+
+# Pod disruption budget
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+# Node affinity — prefer system node pool
+nodeSelector:
+  kubernetes.io/os: linux
+
+tolerations: []
+
+# Webhook configuration
+webhook:
+  replicaCount: 2
+  resources:
+    requests:
+      cpu: 25m
+      memory: 32Mi
+    limits:
+      cpu: 100m
+      memory: 128Mi
+
+# CA injector
+cainjector:
+  replicaCount: 1
+  resources:
+    requests:
+      cpu: 25m
+      memory: 64Mi
+    limits:
+      cpu: 100m
+      memory: 256Mi
+
+# Global settings
+global:
+  leaderElection:
+    namespace: cert-manager
+
+# Logging
+logLevel: 2
