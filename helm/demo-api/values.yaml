@@ -50,5 +50,18 @@ resourceQuota:
   maxPods: "20"
   maxServices: "10"
 
+limitRange:
+  enabled: false
+  defaultCpu: 250m
+  defaultMemory: 256Mi
+  defaultRequestCpu: 100m
+  defaultRequestMemory: 128Mi
+  maxCpu: "1"
+  maxMemory: 1Gi
+  minCpu: 50m
+  minMemory: 64Mi
+  podMaxCpu: "2"
+  podMaxMemory: 2Gi
+
 env:
   ENVIRONMENT: default
